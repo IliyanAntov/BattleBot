@@ -32,7 +32,7 @@
 #define REMOTEXY_SERVER_PORT 6377 
 
 
-// RemoteXY configurate   
+// RemoteXY configuration
 #pragma pack(push, 1) 
 uint8_t RemoteXY_CONF[] = 
   { 255,6,0,0,0,52,0,8,218,0,
@@ -64,23 +64,72 @@ struct {
 ///////////////////////////////////////////// 
 
 
+#define ENA 5
+#define ENB 6
+
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
+
+int spinDirection = 1;
 
 void setup()  
 { 
-  RemoteXY_Init ();  
-   
-   
-  // TODO you setup code 
-   
+  RemoteXY_Init ();
+  
+  pinMode(ENA, OUTPUT);   //Setting up driver pins 
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  digitalWrite(IN1, HIGH);   //Setting up initial rotation direction
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  digitalWrite(ENA, LOW);   //Making sure the motors are stopped
+  digitalWrite(ENB, LOW); 
+
 } 
 
 void loop()  
 {  
-  RemoteXY_Handler (); 
-   
-   
-  // TODO you loop code 
-  // use the RemoteXY structure for data transfer 
+  RemoteXY_Handler ();
+  
+  if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
+    spinDirection = !spinDirection;   
+    ReverseDirection(spinDirection);
+  }
+
+  int pwmValue = map(abs(RemoteXY.acceleration), 0, 100, 0, 255);   //Calculate motor speed
+
+  analogWrite(ENA, pwmValue); 
+  analogWrite(ENB, pwmValue); 
+  
 
 
+  
+
+}
+
+int DetermineSpinDirection(int acceleration){
+  return (acceleration < 0) ? 0 : 1;
+}
+
+void ReverseDirection(int spinDirection){
+  if(spinDirection > 0){     //Forward
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
+  else{                      //Backwards   
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  }
 }
