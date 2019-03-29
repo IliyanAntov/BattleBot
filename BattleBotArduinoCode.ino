@@ -73,6 +73,7 @@ struct {
 #define IN4 11
 
 int spinDirection = 1;
+int motorSpeed[2] = {0, 0};
 
 void setup()  
 { 
@@ -101,25 +102,26 @@ void loop()
   
   if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
     spinDirection = !spinDirection;   
-    ReverseDirection(spinDirection);
+    ChangeDirection(spinDirection);
   }
 
-  int pwmValue = map(abs(RemoteXY.acceleration), 0, 100, 0, 255);   //Calculate motor speed
+  int totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
+  CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.left_right_x); 
 
-  analogWrite(ENA, pwmValue); 
-  analogWrite(ENB, pwmValue); 
-  
-
-
-  
+  analogWrite(ENA, motorSpeed[0]);
+  analogWrite(ENB, motorSpeed[1]);
 
 }
 
-int DetermineSpinDirection(int acceleration){
+char DetermineSpinDirection(int acceleration){  // b for backward, f for forward
   return (acceleration < 0) ? 0 : 1;
 }
 
-void ReverseDirection(int spinDirection){
+int DetermineTurnDirection(int turnModifier){ // 0 for left, 1 for right
+  return (turnModifier < 0) ? 0 : 1;
+}
+
+void ChangeDirection(int spinDirection){
   if(spinDirection > 0){     //Forward
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
@@ -132,4 +134,19 @@ void ReverseDirection(int spinDirection){
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
   }
+}
+
+int CalculateTotalSpeed(int acceleration){
+  return map(abs(acceleration), 0, 100, 0, 255);
+}
+
+void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
+  int turnDirection = DetermineTurnDirection(turnModifier);
+
+  if(turnDirection < 0){
+    turnModifier = abs(turnModifier);
+    motorSpeed[0] = totalSpeed - (((float)turnModifier / 100) * totalSpeed);
+    motorSpeed[1] = totalSpeed - (((float)(100 - turnModifier) / 100) * totalSpeed);
+  }
+  
 }
