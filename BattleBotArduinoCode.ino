@@ -113,7 +113,7 @@ void loop()
 
 }
 
-char DetermineSpinDirection(int acceleration){  // b for backward, f for forward
+int DetermineSpinDirection(int acceleration){  // 0 for backward, 1 for forward
   return (acceleration < 0) ? 0 : 1;
 }
 
@@ -142,11 +142,14 @@ int CalculateTotalSpeed(int acceleration){
 
 void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
   int turnDirection = DetermineTurnDirection(turnModifier);
-
-  if(turnDirection < 0){
-    turnModifier = abs(turnModifier);
-    motorSpeed[0] = totalSpeed - (((float)turnModifier / 100) * totalSpeed);
-    motorSpeed[1] = totalSpeed - (((float)(100 - turnModifier) / 100) * totalSpeed);
+  int modifier = map(abs(turnModifier), 0, 100, 0, 255);
+  if(turnDirection == 0){
+    motorSpeed[0] = totalSpeed;
+    motorSpeed[1] = totalSpeed - modifier;
+  }
+  else{
+    motorSpeed[0] = totalSpeed - modifier;
+    motorSpeed[1] = totalSpeed;
   }
   
 }
