@@ -3,11 +3,11 @@
     
    This source code of graphical user interface  
    has been generated automatically by RemoteXY editor. 
-   To compile this code using RemoteXY library 2.3.3 or later version  
+   To compile this code using RemoteXY library 2.3.5 or later version  
    download by link http://remotexy.com/en/library/ 
    To connect using RemoteXY mobile app by link http://remotexy.com/en/download/                    
-     - for ANDROID 4.1.1 or later version; 
-     - for iOS 1.2.1 or later version; 
+     - for ANDROID 4.3.1 or later version; 
+     - for iOS 1.3.5 or later version; 
      
    This source code is free software; you can redistribute it and/or 
    modify it under the terms of the GNU Lesser General Public 
@@ -32,26 +32,25 @@
 #define REMOTEXY_SERVER_PORT 6377 
 
 
-// RemoteXY configuration
+// RemoteXY configurate   
 #pragma pack(push, 1) 
 uint8_t RemoteXY_CONF[] = 
-  { 255,6,0,0,0,52,0,8,218,0,
-  5,32,6,32,27,27,2,26,31,4,
-  48,83,15,11,51,2,26,1,1,37,
-  8,27,17,2,31,87,69,80,0,4,
-  160,0,0,100,5,2,26,1,0,33,
-  48,12,12,2,31,51,54,48,0 }; 
+  { 255,5,0,0,0,47,0,8,24,0,
+  5,32,6,26,30,30,2,25,31,4,
+  48,81,8,12,50,65,31,1,0,39,
+  36,19,19,2,31,226,134,146,226,134,
+  144,0,1,0,15,12,12,12,2,31,
+  51,54,48,0 }; 
    
 // this structure defines all the variables of your control interface  
 struct { 
 
     // input variable
-  int8_t left_right_x; // =-100..100 x-coordinate joystick position 
-  int8_t left_right_y; // =-100..100 y-coordinate joystick position 
+  int8_t steering_x; // =-100..100 x-coordinate joystick position 
+  int8_t steering_y; // =-100..100 y-coordinate joystick position 
   int8_t acceleration; // =-100..100 slider position 
-  uint8_t weapon; // =1 if button pressed, else =0 
-  int8_t manual_weapon; // =-100..100 slider position 
-  uint8_t spin; // =1 if button pressed, else =0 
+  uint8_t spin_weapon; // =1 if button pressed, else =0 
+  uint8_t rotate; // =1 if button pressed, else =0 
 
     // other variable
   uint8_t connect_flag;  // =1 if wire connected, else =0 
@@ -64,6 +63,7 @@ struct {
 ///////////////////////////////////////////// 
 
 
+
 #define ENA 5
 #define ENB 6
 
@@ -72,8 +72,12 @@ struct {
 #define IN3 10
 #define IN4 11
 
+#define WEAPONMOTOR1 3
+#define WEAPONMOTOR2 4
+
 int spinDirection = 1;
 int motorSpeed[2] = {0, 0};
+int totalSpeed = 0;
 
 void setup()  
 { 
@@ -85,6 +89,8 @@ void setup()
   pinMode(ENB, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
+  pinMode(WEAPONMOTOR1, OUTPUT);
+  pinMode(WEAPONMOTOR2, OUTPUT);
 
   digitalWrite(IN1, HIGH);   //Setting up initial rotation direction
   digitalWrite(IN2, LOW);
@@ -94,22 +100,32 @@ void setup()
   digitalWrite(ENA, LOW);   //Making sure the motors are stopped
   digitalWrite(ENB, LOW); 
 
+  digitalWrite(WEAPONMOTOR1, LOW); //Making sure the weapon is stopped
+  digitalWrite(WEAPONMOTOR2, LOW);
+
 } 
 
 void loop()  
 {  
   RemoteXY_Handler ();
   
-  if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
+  if(RemoteXY.rotate){
+    Rotate360();
+  }
+  
+  else if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
     spinDirection = !spinDirection;   
     ChangeDirection(spinDirection);
   }
-
-  int totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
-  CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.left_right_x); 
+  
+  totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
+  CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.steering_x); 
 
   analogWrite(ENA, motorSpeed[0]);
   analogWrite(ENB, motorSpeed[1]);
+
+  SpinWeapon();
+
 
 }
 
@@ -151,5 +167,22 @@ void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
     motorSpeed[0] = totalSpeed - modifier;
     motorSpeed[1] = totalSpeed;
   }
-  
+}
+
+void Rotate360(){
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, LOW);
+}
+
+void SpinWeapon(){
+  if(RemoteXY.spin_weapon){
+    digitalWrite(WEAPONMOTOR1, HIGH);
+    digitalWrite(WEAPONMOTOR2, HIGH);
+  }
+  else{
+    digitalWrite(WEAPONMOTOR1, LOW);
+    digitalWrite(WEAPONMOTOR2, LOW);
+  }
 }
