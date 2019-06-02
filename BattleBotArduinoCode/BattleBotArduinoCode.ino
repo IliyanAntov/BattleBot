@@ -109,10 +109,7 @@ void loop()
 {  
   RemoteXY_Handler ();
   
-  if(RemoteXY.rotate){
-    Rotate360();
-  }
-  
+  Rotate360();
   else if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
     spinDirection = !spinDirection;   
     ChangeDirection(spinDirection);
@@ -166,8 +163,14 @@ void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
 }
 
 void Rotate360(){
-    digitalWrite(M1DIR, HIGH);
-    digitalWrite(M2DIR, LOW);
+    if(RemoteXY.rotate){
+      digitalWrite(M1DIR, HIGH);
+      digitalWrite(M2DIR, LOW);
+    }
+    else{
+      digitalWrite(M1DIR, LOW);
+      digitalWrite(M2DIR, LOW);
+    }
 }
 
 void SpinWeapon(){
