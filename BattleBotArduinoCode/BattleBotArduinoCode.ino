@@ -64,16 +64,16 @@ struct {
 
 
 
-#define ENA 5
-#define ENB 6
+#define M1PWM 9
+#define M2PWM 10
 
-#define IN1 8
-#define IN2 9
-#define IN3 10
-#define IN4 11
+#define M1DIR 7
+#define M2DIR 8
 
-#define WEAPONMOTOR1 3
-#define WEAPONMOTOR2 4
+#define WEAPONMOTOR1 2
+#define WEAPONMOTOR2 3
+
+#define D2BAR 4
 
 int spinDirection = 1;
 int motorSpeed[2] = {0, 0};
@@ -83,25 +83,25 @@ void setup()
 { 
   RemoteXY_Init ();
   
-  pinMode(ENA, OUTPUT);   //Setting up driver pins 
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(ENB, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+  pinMode(M1PWM, OUTPUT);   //Setting up driver pins 
+  pinMode(M1DIR, OUTPUT);
+  pinMode(M2PWM, OUTPUT);
+  pinMode(M2DIR, OUTPUT);
   pinMode(WEAPONMOTOR1, OUTPUT);
   pinMode(WEAPONMOTOR2, OUTPUT);
 
-  digitalWrite(IN1, HIGH);   //Setting up initial rotation direction
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  pinMode(D2BAR, OUTPUT);
 
-  digitalWrite(ENA, LOW);   //Making sure the motors are stopped
-  digitalWrite(ENB, LOW); 
+  digitalWrite(M1DIR, LOW);   //Setting up initial rotation direction
+  digitalWrite(M2DIR, LOW);
+
+  digitalWrite(M1PWM, LOW);   //Making sure the motors are stopped
+  digitalWrite(M2PWM, LOW); 
 
   digitalWrite(WEAPONMOTOR1, LOW); //Making sure the weapon is stopped
   digitalWrite(WEAPONMOTOR2, LOW);
+
+  digitalWrite(D2BAR, HIGH); 
 
 } 
 
@@ -121,8 +121,8 @@ void loop()
   totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
   CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.steering_x); 
 
-  analogWrite(ENA, motorSpeed[0]);
-  analogWrite(ENB, motorSpeed[1]);
+  analogWrite(M1PWM, motorSpeed[0]);
+  analogWrite(M2PWM, motorSpeed[1]);
 
   SpinWeapon();
 
@@ -139,16 +139,12 @@ int DetermineTurnDirection(int turnModifier){ // 0 for left, 1 for right
 
 void ChangeDirection(int spinDirection){
   if(spinDirection > 0){     //Forward
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(M1DIR, LOW);
+    digitalWrite(M2DIR, LOW);
   }
   else{                      //Backwards   
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(M1DIR, HIGH);
+    digitalWrite(M2DIR, HIGH);
   }
 }
 
@@ -170,10 +166,8 @@ void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
 }
 
 void Rotate360(){
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, LOW);
+    digitalWrite(M1DIR, HIGH);
+    digitalWrite(M2DIR, LOW);
 }
 
 void SpinWeapon(){
