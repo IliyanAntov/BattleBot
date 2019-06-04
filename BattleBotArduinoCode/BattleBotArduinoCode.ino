@@ -35,12 +35,14 @@
 // RemoteXY configurate   
 #pragma pack(push, 1) 
 uint8_t RemoteXY_CONF[] = 
-  { 255,5,0,0,0,47,0,8,24,0,
-  5,32,6,26,30,30,2,25,31,4,
-  48,81,8,12,50,65,31,1,0,39,
-  36,19,19,2,31,226,134,146,226,134,
-  144,0,1,0,15,12,12,12,2,31,
-  51,54,48,0 }; 
+  { 255,6,0,0,0,70,0,8,24,0,
+  5,32,6,27,30,30,30,34,31,4,
+  48,78,11,11,43,34,30,1,0,14,
+  10,13,13,34,31,51,54,48,0,2,
+  0,41,29,20,10,34,26,31,31,87,
+  69,80,50,0,79,70,70,0,2,0,
+  41,44,20,10,34,26,31,31,87,69,
+  80,49,0,79,70,70,0 }; 
    
 // this structure defines all the variables of your control interface  
 struct { 
@@ -49,8 +51,9 @@ struct {
   int8_t steering_x; // =-100..100 x-coordinate joystick position 
   int8_t steering_y; // =-100..100 y-coordinate joystick position 
   int8_t acceleration; // =-100..100 slider position 
-  uint8_t spin_weapon; // =1 if button pressed, else =0 
   uint8_t rotate; // =1 if button pressed, else =0 
+  uint8_t spin_weapon_2; // =1 if switch ON and =0 if OFF 
+  uint8_t spin_weapon_1; // =1 if switch ON and =0 if OFF 
 
     // other variable
   uint8_t connect_flag;  // =1 if wire connected, else =0 
@@ -61,6 +64,7 @@ struct {
 ///////////////////////////////////////////// 
 //           END RemoteXY include          // 
 ///////////////////////////////////////////// 
+
 
 
 
@@ -108,21 +112,36 @@ void setup()
 void loop()  
 {  
   RemoteXY_Handler ();
+
+  if(RemoteXY.connect_flag){
+    
+    if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
+      spinDirection = !spinDirection;   
+    }
+    
+    if(RemoteXY.rotate){  //Checking if the 360 button is pressed
+      Rotate360();
+    }
+    else{
+      DetermineDirection(spinDirection);
+    }
+    
+    totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
+    CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.steering_x); 
   
-  Rotate360();
-  else if(spinDirection != DetermineSpinDirection(RemoteXY.acceleration)){   //Reverse the direction if needed
-    spinDirection = !spinDirection;   
-    ChangeDirection(spinDirection);
+    analogWrite(M1PWM, motorSpeed[0]);
+    analogWrite(M2PWM, motorSpeed[1]);
+  
+    SpinWeapon(); //Checking if any of the weapon buttons are pressed
   }
   
-  totalSpeed = CalculateTotalSpeed(RemoteXY.acceleration);   //Calculate total motor speed
-  CalculateIndividualMotorSpeed(totalSpeed, RemoteXY.steering_x); 
-
-  analogWrite(M1PWM, motorSpeed[0]);
-  analogWrite(M2PWM, motorSpeed[1]);
-
-  SpinWeapon();
-
+  else{
+    digitalWrite(M1PWM, LOW);   //Making sure the motors are stopped
+    digitalWrite(M2PWM, LOW); 
+  
+    digitalWrite(WEAPONMOTOR1, LOW); //Making sure the weapon is stopped
+    digitalWrite(WEAPONMOTOR2, LOW);
+  }
 
 }
 
@@ -134,7 +153,7 @@ int DetermineTurnDirection(int turnModifier){ // 0 for left, 1 for right
   return (turnModifier < 0) ? 0 : 1;
 }
 
-void ChangeDirection(int spinDirection){
+void DetermineDirection(int spinDirection){
   if(spinDirection > 0){     //Forward
     digitalWrite(M1DIR, LOW);
     digitalWrite(M2DIR, LOW);
@@ -163,23 +182,21 @@ void CalculateIndividualMotorSpeed(int totalSpeed, int turnModifier){
 }
 
 void Rotate360(){
-    if(RemoteXY.rotate){
-      digitalWrite(M1DIR, HIGH);
-      digitalWrite(M2DIR, LOW);
-    }
-    else{
-      digitalWrite(M1DIR, LOW);
-      digitalWrite(M2DIR, LOW);
-    }
+    digitalWrite(M1DIR, HIGH);
+    digitalWrite(M2DIR, LOW);
 }
 
 void SpinWeapon(){
-  if(RemoteXY.spin_weapon){
+  if(RemoteXY.spin_weapon_1){
     digitalWrite(WEAPONMOTOR1, HIGH);
+  }
+  else{
+    digitalWrite(WEAPONMOTOR1, LOW);  
+  }
+  if(RemoteXY.spin_weapon_2){
     digitalWrite(WEAPONMOTOR2, HIGH);
   }
   else{
-    digitalWrite(WEAPONMOTOR1, LOW);
     digitalWrite(WEAPONMOTOR2, LOW);
   }
 }
