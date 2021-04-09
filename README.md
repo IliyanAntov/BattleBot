@@ -1,6 +1,6 @@
 # Боен робот с дистанционно управление<br/>Remote control Battlebot
 
-## [Официална документация](./Documents/Battlebot_Documentation_Iliyan_Antov.pdf)
+# [Официална документация](./Documents/Battlebot_Documentation_Iliyan_Antov.pdf)
 # [Презентация на проекта](https://docs.google.com/presentation/d/1odBkF2noT_PoMxy1lFQc3AZkdeY1q7n4EqtyDL5grHw/edit?usp=sharing)
 
 ![ ](./Documents/Bot.jpg)
